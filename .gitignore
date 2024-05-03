@@ -1,0 +1,13 @@
+.*/
+
+*.code-workspace
+
+# normal output
+
+vs.sh
+
+# auxiliary output
+
+SDK.list
+VCTOOLS.list
+VCREDIST.list
