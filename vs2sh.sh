@@ -684,6 +684,20 @@ args_parse() {
 
 ################################################################################
 
+# Operations on lists
+
+# Get value of a variable from list
+#
+# $1: name of the variable
+# $2: name of variable holding the list
+#
+list_get_value() {
+	local __sed="/^$1=/ { s|^$1=|| ; p ; q }"
+	run_sed -n "${__sed}" $2
+}
+
+################################################################################
+
 # Processing of environment files
 
 # Following variables contain filenames of environment files to operate on
@@ -1081,11 +1095,9 @@ env_sort() {
 #
 _env_subst_escape() {
 	local _var=$1
-	local _value _qvalue __sed
+	local _value _qvalue
 
-	local __sed="/^${_var}=/ { s|^${_var}=|| ; p ; q }"
-
-	_value=$(run_sed -n "${__sed}" env_final)
+	_value=$(list_get_value ${_var} env_final)
 	_qvalue=$(sed_escape "${_value}")
 
 	append_list env_quoted_vars "${_var}"
@@ -1101,8 +1113,7 @@ _env_subst() {
 	local _var=$1
 	local _val __sed
 
-	__sed="/^${_var}=/ { s|^${_var}=|| ; p ; q }"
-	_val=$(run_sed -n "${__sed}" env_devel)
+	_val=$(list_get_value ${_var} env_devel)
 
 	local __save_IFS=${IFS}
 	local IFS=${nl}
@@ -1268,10 +1279,7 @@ _env_write_var() {
 	local _val
 	local _format
 
-	local __sed
-
-	__sed="/^${_var}=/ { s|^${_var}=|| ; p ; q }"
-	_val=$(run_sed -n "${__sed}" env_final)
+	_val=$(list_get_value ${_var} env_final)
 
 	case ${_val} in
 	*\$*)
@@ -1298,10 +1306,8 @@ _env_write_var() {
 _env_write_list() {
 	local _var=$1
 	local _list _item
-	local __sed
 
-	__sed="/^${_var}=/ { s|^${_var}=|| ; p ; q }"
-	_list=$(run_sed -n "${__sed}" env_final | sed 's|;|\n|g' | tac)
+	_list=$(list_get_value ${_var} env_final | sed 's|[;]|\n|g' | tac)
 
 	local __save_IFS=${IFS}
 	local IFS=${nl}
@@ -1398,8 +1404,7 @@ _dump_sdk() {
 
 	local _var=WindowsSdkDir
 
-	local __sed="/^${_var}=/ { s|^${_var}=|| ; p ; q }"
-	local _dir=$(run_sed -n "${__sed}" env_devel)
+	local _dir=$(list_get_value ${_var} env_devel)
 
 	if test -z "${_dir}"; then
 		warning "cannot dump SDK.list - variable ${_var} is not found in environment file"
@@ -1446,8 +1451,7 @@ __dump_vc() {
 	local _file_tmp=$(mktemp -p "${dir_tmp}" dump-XXXXXXXX)
 	local _file_dump=${opt_dump_dir}/${_filename}
 
-	local __sed="/^${_var}=/ { s|^${_var}=|| ; p ; q }"
-	local _dir=$(run_sed -n "${__sed}" env_devel)
+	local _dir=$(list_get_value ${_var} env_devel)
 
 	if test -z "${_dir}"; then
 		warning "cannot dump ${_filename} - variable ${_var} is not found in environment file"
