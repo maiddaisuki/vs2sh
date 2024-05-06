@@ -812,10 +812,10 @@ _env_normalize() {
 # processed
 #
 env_prepare() {
-	file_env_user=${dir_tmp}/$(basename "${opt_file_env_user}")
+	file_env_user=$(mktemp -p "${dir_tmp}" env-XXXXXXXX)
 	cp "${opt_file_env_user}" "${file_env_user}"
 
-	file_env_devel=${dir_tmp}/$(basename "${opt_file_env_devel}")
+	file_env_devel=$(mktemp -p "${dir_tmp}" env-XXXXXXXX)
 	cp "${opt_file_env_devel}" "${file_env_devel}"
 
 	_env_iconv "${file_env_user}"
