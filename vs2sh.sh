@@ -489,12 +489,12 @@ opt_dump_only=no
 #
 opt_dump_dir=
 
-msg_help="USAGE: $(basename "$0") -d FILENAME -u FILENAME [OPTIONS]
+msg_help="Usage: $(basename "$0") -d FILENAME -u FILENAME [OPTIONS]
 
 OPTIONS:
 
-	-h | -help
-		print this help massage and exit successfully
+	-h | --help
+		print this help massage and exit
 
 	-u FILENAME | --user-env=FILENAME
 		specify file containing variables from default environment
@@ -503,11 +503,13 @@ OPTIONS:
 		specify file containing variables from development environment
 
 	-o FILENAME | --output=FILENAME
-		specify output file
-			Default is vs.sh
+		specify output file (default is vs.sh)
+
+	-l LOCALE | --locale=LOCALE
+		specify locale to use for LC_ALL (default is C)
 
 	--sdk=VERSION
-		generate profile to use specified VERSION of Winodws SDK
+		generate profile to use specified VERSION of Windows SDK
 
 	--vctools=VERSION
 		generate profile to use specified VERSION of Visual C tools
@@ -517,9 +519,9 @@ OPTIONS:
 
 	--[no-]cygpath
 		whether to use cygpath in generated files
-			Default is to use it if it was found on the system
+		(default is to use it if it was found on the system)
 
-	--fast
+	-f | --fast
 		do not perform variable substitution
 
 Auxiliary output
@@ -528,11 +530,11 @@ Auxiliary output
 		produce auxiliary output in addition to normal output
 
 	--dump-only
-		produce auxiliary output only. Do not produce normal output
+		produce auxiliary output without producing normal output
 
-	-dump-dir=DIRNAME
+	--dump-dir=DIRNAME
 		specify directory where to write auxiliary files
-			Default is to write in the current directory
+		(default is to write in the current directory)
 "
 
 # Get option's argument and assign it to a variable
