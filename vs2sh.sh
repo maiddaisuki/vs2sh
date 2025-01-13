@@ -1,9 +1,9 @@
 #!/bin/env sh
 
-#    vs2sh.sh - create startup files for sh-compatible shells to allow use of
-#    Visual Studio command line tools
+#    vs2sh.sh - create shell script to setup environment for Visual Studio
+#    command line tools
 #
-#    Copyright (C) 2024 Kirill Makurin
+#    Copyright (C) 2024-2025 Kirill Makurin
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -58,7 +58,7 @@ not() {
 
 # Output functions
 
-# Writes formatted string to standard output
+# Write formatted string to standard output
 #
 # $1: format string
 # $*: arguments
@@ -67,7 +67,7 @@ print() {
 	printf "$@"
 }
 
-# Writes warning message to standard error
+# Write warning message to standard error
 #
 # $1: message to write
 #
@@ -75,7 +75,7 @@ warning() {
 	print '%s: WARNING: %s\n' "$(basename "$0")" "$1" >>/dev/stderr
 }
 
-# Writes error message to standard error
+# Write error message to standard error
 #
 # $1: message to write
 #
@@ -83,7 +83,7 @@ error() {
 	print '%s: ERROR: %s\n' "$(basename "$0")" "$1" >>/dev/stderr
 }
 
-# Print an error message and abort execution of the script
+# Print error message and abort execution of the script
 #
 # $1: message to write
 #
@@ -94,7 +94,7 @@ die() {
 
 # Operations on variables
 
-# Apppends text to the end of a varaible
+# Append text to the end of a variable
 #
 # $1: name of variable
 # $2: text to append
@@ -139,7 +139,7 @@ fi
 
 # Operations on strings
 
-# Compare two strings to be equal
+# Check whether two given strings are equal
 #
 # $1 and $2: string to compare
 #
@@ -230,7 +230,7 @@ shell_escape_path() {
 
 # Functions to replace missing tools
 
-# Converts an absolute windows path into unix path
+# Convert an absolute windows path into unix path
 #
 # $1: path to convert
 #
@@ -238,7 +238,7 @@ path_win_to_unix() {
 	:
 }
 
-# Converts an absolute unix path into windows path
+# Convert an absolute unix path into windows path
 #
 # $1: path to convert
 #
@@ -246,7 +246,7 @@ path_unix_to_win() {
 	:
 }
 
-# use cygpath if we have it, emulate using sed otherwise
+# use cygpath installed, emulate using sed otherwise
 
 if type cygpath >/dev/null 2>&1; then
 	has_cygpath=yes
@@ -305,7 +305,7 @@ fi
 # it will casue troubles with sed and grep
 #
 
-# Converts file with CRLF end-of-line sequences into LF
+# Convert file with CRLF end-of-line sequences into LF
 #
 # $1: file to convert
 #
@@ -313,7 +313,7 @@ convert_crlf_to_lf() {
 	:
 }
 
-# use dos2unix if we have it, emulate otherwise
+# use dos2unix if installed, emulate otherwise
 
 if type dos2unix >/dev/null 2>&1; then
 	convert_crlf_to_lf() {
@@ -342,7 +342,7 @@ else
 			mv "${_tmp_file}" "$1"
 		}
 	else
-		die "cannot covert CRLF files into LF"
+		die "cannot convert files with CRLF end-of-line sequence into LF"
 	fi
 
 	unset _test_str _test_str_result
@@ -354,7 +354,7 @@ fi
 # variable rather than append
 #
 
-# Original MinGW lacks tac
+# mingw32 lacks tac
 
 if not type tac >/dev/null 2>&1; then
 	tac() {
@@ -367,7 +367,7 @@ if not type tac >/dev/null 2>&1; then
 	}
 fi
 
-# Original MinGW lacks realpath
+# mingw32 lacks realpath
 
 if not type realpath >/dev/null 2>&1; then
 	realpath() {
@@ -379,17 +379,17 @@ fi
 
 # Script initialization
 
-# Holds filename of the temporary directory used by the script
+# Holds name of the temporary directory used by the script
 #
 dir_tmp=
 
-# Checks for required programs and aborts execution if any is missing
+# Check for required programs and abort execution if any is missing
 #
 _init_check() {
 	local _prog
 
 	for _prog in mktemp iconv; do
-		type ${_prog} >/dev/null 2>&1 || die "cannot locate ${_prog}"
+		type ${_prog} >/dev/null 2>&1 || die "${_prog}: required program not found"
 	done
 }
 
@@ -467,11 +467,13 @@ opt_vcredist=
 #
 opt_fast=no
 
-# Set to yes if --cygpath has been passed, or
-# Set to no if --no-cygpath has been passed, or
-# Set to value of has_cygpath otherwise
+# whether to use cygpath in the output file
 #
-# specifies whether cygpath should be used in the output profile
+# Set to
+#
+#  - `yes` if --cygpath has been passed, or
+#  - `no` if --no-cygpath has been passed, or
+#  - value of `has_cygpath` otherwise
 #
 opt_cygpath=
 
@@ -495,14 +497,14 @@ OPTIONS:
 		print this help massage and exit successfully
 
 	-u FILENAME | --user-env=FILENAME
-		specify filename of file containing variables from default environment
+		specify file containing variables from default environment
 
 	-d FILENAME | --dev-env=FILENAME
-		specify filename of file containing variables from development environment
+		specify file containing variables from development environment
 
 	-o FILENAME | --output=FILENAME
-		specify filename of generated profile file
-			Default filename is vs.sh
+		specify output file
+			Default is vs.sh
 
 	--sdk=VERSION
 		generate profile to use specified VERSION of Winodws SDK
@@ -533,8 +535,8 @@ Auxiliary output
 			Default is to write in the current directory
 "
 
-# Gets option's argument and assigns it to a variable
-# If option's argument is missing or has an empty value, aborts execution
+# Get option's argument and assign it to a variable
+# If option's argument is missing or has an empty value, abort execution
 #
 # $1: variable to assign option's argument
 # $2: argument as passed to the script
@@ -556,14 +558,14 @@ _arg_get_value() {
 			eval "${__var}=\$1"
 			return 1
 		else
-			die "missing argument to ${__opt}"
+			die "${__opt}: argument is missing"
 		fi
 	else
 		if test -n "${__arg}"; then
 			eval "${__var}=\${__arg}"
 			return 0
 		else
-			die "empty value supplied with ${__opt} option"
+			die "${__opt}: argument is empty"
 		fi
 	fi
 }
@@ -571,34 +573,34 @@ _arg_get_value() {
 # Check if file exists and assign its absolute filename to a variable
 # If file does not exist or unreadable, aborts execution
 #
-# $1: varaible to assign
+# $1: variable to assign
 # $2: filename
 #
 _arg_process_file() {
 	if test -r "$2"; then
 		eval "$1=\$(realpath \"$2\")"
 	elif test -f "$2"; then
-		die "file '$2' cannot be read"
+		die "$2: file cannot be read"
 	else
-		die "file '$2' does not exist"
+		die "$2: file does not exist"
 	fi
 }
 
 # Check if directory exists and assign its absolute filename to a variable
 # If directory does not exist, aborts execution
 #
-# $1: varaible to assign
+# $1: variable to assign
 # $2: dirname
 #
 _arg_process_dir() {
 	if test -d "$2"; then
 		eval "$1=\$(realpath \"$2\")"
 	else
-		die "directory '$2' does not exist"
+		die "$2: directory does not exist"
 	fi
 }
 
-# Parses arguments passed to the script
+# Parse arguments passed to the script
 #
 # $*: arguments passed to the script
 #
@@ -658,7 +660,7 @@ args_parse() {
 			_arg_process_dir opt_dump_dir "${_val}"
 			;;
 		*)
-			die "unrecognized option ${_arg}"
+			die "${_arg}: unrecognized option"
 			;;
 		esac
 
@@ -712,15 +714,15 @@ file_env_user=
 # Following variables contain contents of environment files
 #
 # env_user* variables contain contents from user environemnt file
-# env_devel* variables contain contents from user environemnt file
+# env_devel* variables contain contents from user development file
 #
 # env_NAME_vars contains names of variables present in corresponding env_NAME
 # varialbe
 #
 # env_NAME contains variables with their values as in the environment file
 #
-# env_NAME_PATH contains newline-saparated list of PATH values form corresponding
-# environment file
+# env_NAME_PATH contains newline-saparated list of PATH values from
+# corresponding environment file
 
 env_user=
 env_user_vars=
@@ -771,17 +773,17 @@ env_quoted_vars=
 # Output from powershell is usually UTF-16 encoded, while output from cmd is
 # UTF-8 encoded.
 #
-# We set LC_ALL to C and if user does not supply differnet locale with
+# We set LC_ALL to C and if user does not supply different locale with
 # --locale option we will try to convert them to ASCII
 #
 # If user supplied locale other than C and POSIX, we will attempt to guess
 # correct encoding
 
-# Convert file to a supporting encoding
+# Convert file encoding
 #
 # $1: file to convert
 #
-# If convertion fails execution aborts
+# If convertion fails abort execution
 #
 _env_iconv() {
 	local _original=$1
@@ -810,10 +812,10 @@ _env_iconv() {
 		fi
 	done
 
-	die "failed to convert input file(s) to a supported encoding"
+	die "failed to convert encoding of input file(s)"
 }
 
-# Removes environment variables whose name is not a valid shell identifier
+# Remove environment variables whose name is not a valid shell identifier
 #
 # $1: environment file to operate on
 #
@@ -822,7 +824,7 @@ _env_normalize() {
 	sed -i -E "${__sed}" "$1"
 }
 
-# Performs operations on environemt files so that they can be read and further
+# Perfors operations on environemt files so that they can be read and further
 # processed
 #
 env_prepare() {
@@ -846,7 +848,7 @@ env_prepare() {
 # env_* variables
 #
 
-# Reads environment files and assigns env_devel* and env_user* variables
+# Read environment files and assign env_devel* and env_user* variables
 #
 env_read() {
 	local __sed=
@@ -894,7 +896,7 @@ _env_remove_common() {
 	IFS=${__save_IFS}
 }
 
-# Remove some known unused variables form the development environment
+# Remove some known unused variables from the development environment
 #
 _env_remove_unused() {
 	local __sed
@@ -932,7 +934,7 @@ _env_remove_PATH() {
 	IFS=${__save_IFS}
 }
 
-# Removes variables and PATH entries that appear in both user and development
+# Remove variables and PATH entries that appear in both user and development
 # environments from the development environment
 #
 # This function also resets env_user* variables as they are no longer needed
@@ -981,7 +983,7 @@ _env_move() {
 	append_list _env_devel "${_value}"
 }
 
-# Sorts variables to perform variable substitution and sets vars_* variables
+# Sort variables to perform variable substitution and set vars_* variables
 #
 # This function is called even if --fast option has been passed
 #
@@ -1104,7 +1106,7 @@ _env_subst_escape() {
 	append_list env_quoted "${_var}=${_qvalue}"
 }
 
-# Attempt variable substitution on the value of a named varaible
+# Attempt variable substitution on the value of a named variable
 # The resulting value is written to standard output
 #
 # $1: name of variable on which to attempt variable substitution
@@ -1201,7 +1203,7 @@ env_subst() {
 }
 
 #
-#
+# Functions for filename conversion
 #
 
 # Convert all directories in the env_devel_PATH to windows-style
@@ -1222,7 +1224,7 @@ env_PATH_to_win() {
 }
 
 #
-# Handling of --sdk. --vctools and --vcredist options
+# Handling of --sdk, --vctools and --vcredist options
 #
 
 # Update value of UCRTVersion variable in env_final to that passed with
@@ -1338,7 +1340,7 @@ _env_write_list() {
 	IFS=${__save_IFS}
 }
 
-# Write PATH varaible to profile file
+# Write PATH variable to profile file
 #
 # The value will be written differently depending on value of opt_cygpath
 #
@@ -1396,7 +1398,7 @@ env_write() {
 
 # Handling of --dump option
 
-# Writes SDK.list
+# Write SDK.list
 #
 _dump_sdk() {
 	local _file_tmp=$(mktemp -p "${dir_tmp}" sdk-XXXXXXXX)
@@ -1480,13 +1482,13 @@ __dump_vc() {
 	fi
 }
 
-# Writes VCTOOLS.list
+# Write VCTOOLS.list
 #
 _dump_vctools() {
 	__dump_vc VCTOOLS.list VCToolsInstallDir '^[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+$'
 }
 
-# Writes VCREDIST.list
+# Write VCREDIST.list
 #
 _dump_vcredist() {
 	__dump_vc VCREDIST.list VCToolsRedistDir '^[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+$'
@@ -1500,7 +1502,7 @@ dump() {
 		_dump_vctools
 		_dump_vcredist
 	else
-		warning "ignoring --dump option - non-windows host"
+		warning "--dump: option ignored - non-windows host"
 	fi
 }
 
