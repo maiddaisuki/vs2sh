@@ -194,4 +194,4 @@ This feature is mostly useful to get list of valid values for `--sdk`,
 ## License
 
 The `vs2sh.sh` is licensed under terms of GNU General Public License Version 3.  
-See [LICENSE](LICENSE) for details.
+See [COPYING](./COPYING) for details.
